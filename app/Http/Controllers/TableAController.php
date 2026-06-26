@@ -7,7 +7,6 @@ use App\Imports\TableAImport;
 use App\Models\TableA;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 
 class TableAController extends Controller
 {
@@ -74,14 +73,21 @@ class TableAController extends Controller
             'file' => 'required|mimes:xlsx,xls,csv',
         ]);
 
-        Excel::import(new TableAImport, $request->file('file'));
+        try {
+            $import = new TableAImport;
+            $import->import($request->file('file'));
 
-        return redirect()->route('table-a.index')->with('success', 'Import berhasil!');
+            return redirect()->route('table-a.index')->with('success', 'Import berhasil!');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Import gagal: '.$e->getMessage());
+        }
     }
 
     public function exportExcel()
     {
-        return Excel::download(new TableAExport, 'table_a.xlsx');
+        $export = new TableAExport;
+
+        return $export->download();
     }
 
     public function exportPdf()

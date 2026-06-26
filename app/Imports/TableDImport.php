@@ -3,25 +3,32 @@
 namespace App\Imports;
 
 use App\Models\TableD;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
+use Exception;
+use Rap2hpoutre\FastExcel\FastExcel;
 
-class TableDImport implements ToModel, WithHeadingRow, WithValidation
+class TableDImport
 {
-    public function model(array $row)
+    public function import($file)
     {
-        return new TableD([
-            'kode_sales' => $row['kode_sales'],
-            'nama_sales' => $row['nama_sales'],
-        ]);
-    }
+        (new FastExcel)->import($file, function ($row) {
+            if (! array_key_exists('kode_sales', $row)) {
+                throw new Exception('Format Excel salah! Kolom "kode_sales" tidak ditemukan.');
+            }
+            if (! array_key_exists('nama_sales', $row)) {
+                throw new Exception('Format Excel salah! Kolom "nama_sales" tidak ditemukan.');
+            }
 
-    public function rules(): array
-    {
-        return [
-            'kode_sales' => 'required|string|unique:table_d,kode_sales',
-            'nama_sales' => 'required|string|max:20',
-        ];
+            if (empty(trim($row['kode_sales']))) {
+                throw new Exception('kode_sales tidak boleh kosong.');
+            }
+            if (empty(trim($row['nama_sales']))) {
+                throw new Exception('nama_sales tidak boleh kosong.');
+            }
+
+            TableD::create([
+                'kode_sales' => trim($row['kode_sales']),
+                'nama_sales' => trim($row['nama_sales']),
+            ]);
+        });
     }
 }

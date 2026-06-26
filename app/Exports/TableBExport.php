@@ -3,31 +3,14 @@
 namespace App\Exports;
 
 use App\Models\TableB;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Rap2hpoutre\FastExcel\FastExcel;
 
-class TableBExport implements FromCollection, WithHeadings, WithStyles
+class TableBExport
 {
-    public function collection()
+    public function download()
     {
-        return TableB::all(['kode_toko', 'nominal_transaksi']);
-    }
+        $data = TableB::all(['kode_toko', 'nominal_transaksi']);
 
-    public function headings(): array
-    {
-        return ['kode_toko', 'nominal_transaksi'];
-    }
-
-    public function styles(Worksheet $sheet)
-    {
-        return [
-            1 => [
-                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-                'fill' => ['fillType' => 'solid', 'startColor' => ['argb' => 'FF4F81BD']],
-                'alignment' => ['horizontal' => 'center'],
-            ],
-        ];
+        return (new FastExcel($data))->download('table_b.xlsx');
     }
 }

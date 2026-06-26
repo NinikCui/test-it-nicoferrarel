@@ -7,7 +7,6 @@ use App\Imports\TableCImport;
 use App\Models\TableC;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 
 class TableCController extends Controller
 {
@@ -74,14 +73,21 @@ class TableCController extends Controller
             'file' => 'required|mimes:xlsx,xls,csv',
         ]);
 
-        Excel::import(new TableCImport, $request->file('file'));
+        try {
+            $import = new TableCImport;
+            $import->import($request->file('file'));
 
-        return redirect()->route('table-c.index')->with('success', 'Import berhasil!');
+            return redirect()->route('table-c.index')->with('success', 'Import berhasil!');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Import gagal: '.$e->getMessage());
+        }
     }
 
     public function exportExcel()
     {
-        return Excel::download(new TableCExport, 'table_c.xlsx');
+        $export = new TableCExport;
+
+        return $export->download();
     }
 
     public function exportPdf()

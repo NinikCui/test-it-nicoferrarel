@@ -3,25 +3,26 @@
 namespace App\Imports;
 
 use App\Models\TableA;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
+use Exception;
+use Rap2hpoutre\FastExcel\FastExcel;
 
-class TableAImport implements ToModel, WithHeadingRow, WithValidation
+class TableAImport
 {
-    public function model(array $row)
+    public function import($file)
     {
-        return new TableA([
-            'kode_toko_baru' => $row['kode_toko_baru'],
-            'kode_toko_lama' => $row['kode_toko_lama'] ?? null,
-        ]);
-    }
+        (new FastExcel)->import($file, function ($row) {
+            if (! array_key_exists('kode_toko_baru', $row)) {
+                throw new Exception('Format Excel salah! Kolom "kode_toko_baru" tidak ditemukan.');
+            }
 
-    public function rules(): array
-    {
-        return [
-            'kode_toko_baru' => 'required|integer|unique:table_a,kode_toko_baru',
-            'kode_toko_lama' => 'nullable|integer',
-        ];
+            if (empty($row['kode_toko_baru']) && $row['kode_toko_baru'] !== 0) {
+                throw new Exception('kode_toko_baru tidak boleh kosong.');
+            }
+
+            TableA::create([
+                'kode_toko_baru' => (int) $row['kode_toko_baru'],
+                'kode_toko_lama' => ! empty($row['kode_toko_lama']) ? (int) $row['kode_toko_lama'] : null,
+            ]);
+        });
     }
 }

@@ -3,25 +3,32 @@
 namespace App\Imports;
 
 use App\Models\TableC;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
+use Exception;
+use Rap2hpoutre\FastExcel\FastExcel;
 
-class TableCImport implements ToModel, WithHeadingRow, WithValidation
+class TableCImport
 {
-    public function model(array $row)
+    public function import($file)
     {
-        return new TableC([
-            'kode_toko' => $row['kode_toko'],
-            'area_sales' => $row['area_sales'],
-        ]);
-    }
+        (new FastExcel)->import($file, function ($row) {
+            if (! array_key_exists('kode_toko', $row)) {
+                throw new Exception('Format Excel salah! Kolom "kode_toko" tidak ditemukan.');
+            }
+            if (! array_key_exists('area_sales', $row)) {
+                throw new Exception('Format Excel salah! Kolom "area_sales" tidak ditemukan.');
+            }
 
-    public function rules(): array
-    {
-        return [
-            'kode_toko' => 'required|integer|unique:table_c,kode_toko',
-            'area_sales' => 'required|string|max:10',
-        ];
+            if (empty($row['kode_toko']) && $row['kode_toko'] !== 0) {
+                throw new Exception('kode_toko tidak boleh kosong.');
+            }
+            if (empty(trim($row['area_sales']))) {
+                throw new Exception('area_sales tidak boleh kosong.');
+            }
+
+            TableC::create([
+                'kode_toko' => (int) $row['kode_toko'],
+                'area_sales' => trim($row['area_sales']),
+            ]);
+        });
     }
 }

@@ -8,7 +8,6 @@ use App\Models\TableB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
 
 class TableBController extends Controller
 {
@@ -79,14 +78,21 @@ class TableBController extends Controller
             'file' => 'required|mimes:xlsx,xls,csv',
         ]);
 
-        Excel::import(new TableBImport, $request->file('file'));
+        try {
+            $import = new TableBImport;
+            $import->import($request->file('file'));
 
-        return redirect()->route('table-b.index')->with('success', 'Import berhasil!');
+            return redirect()->route('table-b.index')->with('success', 'Import berhasil!');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Import gagal: '.$e->getMessage());
+        }
     }
 
     public function exportExcel()
     {
-        return Excel::download(new TableBExport, 'table_b.xlsx');
+        $export = new TableBExport;
+
+        return $export->download();
     }
 
     public function exportPdf()

@@ -2,29 +2,33 @@
 
 namespace App\Imports;
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
+use Rap2hpoutre\FastExcel\FastExcel;
+use Exception;
 
-class TableBImport implements ToCollection, WithHeadingRow, WithValidation
+class TableBImport
 {
-    public function collection(Collection $rows)
+    public function import($file)
     {
-        foreach ($rows as $row) {
-            DB::table('table_b')->insert([
-                'kode_toko' => $row['kode_toko'],
-                'nominal_transaksi' => $row['nominal_transaksi'],
-            ]);
-        }
-    }
+        (new FastExcel)->import($file, function ($row) {
+            if (!array_key_exists('kode_toko', $row)) {
+                throw new Exception('Format Excel salah! Kolom "kode_toko" tidak ditemukan.');
+            }
+            if (!array_key_exists('nominal_transaksi', $row)) {
+                throw new Exception('Format Excel salah! Kolom "nominal_transaksi" tidak ditemukan.');
+            }
 
-    public function rules(): array
-    {
-        return [
-            'kode_toko' => 'required|integer',
-            'nominal_transaksi' => 'required|numeric|min:0',
-        ];
+            if (empty($row['kode_toko']) && $row['kode_toko'] !== 0) {
+                throw new Exception('kode_toko tidak boleh kosong.');
+            }
+            if (empty($row['nominal_transaksi']) && $row['nominal_transaksi'] !== 0) {
+                throw new Exception('nominal_transaksi tidak boleh kosong.');
+            }
+
+            DB::table('table_b')->insert([
+                'kode_toko'         => (int) $row['kode_toko'],
+                'nominal_transaksi' => (float) $row['nominal_transaksi'],
+            ]);
+        });
     }
 }

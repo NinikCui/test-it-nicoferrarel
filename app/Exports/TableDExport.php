@@ -3,31 +3,14 @@
 namespace App\Exports;
 
 use App\Models\TableD;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Rap2hpoutre\FastExcel\FastExcel;
 
-class TableDExport implements FromCollection, WithHeadings, WithStyles
+class TableDExport
 {
-    public function collection()
+    public function download()
     {
-        return TableD::all(['kode_sales', 'nama_sales']);
-    }
+        $data = TableD::all(['kode_sales', 'nama_sales']);
 
-    public function headings(): array
-    {
-        return ['kode_sales', 'nama_sales'];
-    }
-
-    public function styles(Worksheet $sheet)
-    {
-        return [
-            1 => [
-                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-                'fill' => ['fillType' => 'solid', 'startColor' => ['argb' => 'FF4F81BD']],
-                'alignment' => ['horizontal' => 'center'],
-            ],
-        ];
+        return (new FastExcel($data))->download('table_d.xlsx');
     }
 }
